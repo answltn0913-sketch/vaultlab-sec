@@ -1,0 +1,33 @@
+name: vaultlab-sec
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: vaultlab-sec
+  cancel-in-progress: false
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 예전에 모은 자료 가져오기
+        run: |
+          mkdir -p out
+          if git fetch --depth=1 origin data 2>/dev/null; then git archive FETCH_HEAD | tar -x -C out; fi
+      - name: SEC 자료 모으기
+        env:
+          VLST_TOKEN: ${{ secrets.VLST_TOKEN }}
+        run: python3 sec_mirror.py out
+      - name: GitHub에 올리기
+        run: |
+          cd out
+          git init -q -b data
+          git config user.name "vaultlab-bot"
+          git config user.email "bot@vaultlab.kr"
+          git add -A
+          git commit -q -m "SEC mirror $(date -u +%FT%TZ)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" data
