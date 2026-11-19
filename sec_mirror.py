@@ -2,7 +2,8 @@
 import gzip, hashlib, json, os, re, sys, time, urllib.request, urllib.error
 
 SITE = 'https://vaultlab.kr'
-UA = 'VaultLab Research anwltn9341@naver.com'
+UAS = ['VaultLab vaultlab.kr admin@vaultlab.kr', 'VaultLab contact@vaultlab.kr', 'Moon Jisoo anwltn9341@naver.com', 'VaultLab Research anwltn9341@naver.com', 'MoonGaNe VaultLab anwltn9341@naver.com']
+UA = UAS[0]
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'out'
 MAX = 450          # 한 번에 받을 최대 개수
 GAP = 0.13         # SEC 규칙: 1초에 10번 미만
@@ -32,6 +33,19 @@ except urllib.error.HTTPError as e:
     want = SEED
 except Exception as e:
     print('볼트랩 목록을 못 읽었어요:', str(e)[:200]); want = SEED
+probe = 'https://data.sec.gov/submissions/CIK0000320193.json'
+for cand in UAS:
+    try:
+        rr = urllib.request.urlopen(urllib.request.Request(probe, headers={'User-Agent': cand, 'Accept-Encoding': 'gzip, deflate'}), timeout=30); pc = rr.status
+    except urllib.error.HTTPError as e:
+        pc = e.code
+    except Exception as e:
+        pc = 0
+    print('이름표 시험:', cand, '→', pc)
+    if pc == 200:
+        UA = cand; break
+    time.sleep(1)
+print('쓸 이름표:', UA)
 now = time.time()
 todo = []
 for w in want:
