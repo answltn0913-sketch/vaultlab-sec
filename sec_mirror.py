@@ -18,9 +18,20 @@ def ttl(u):
     if 'companyconcept' in u or 'companyfacts' in u: return 24 * 3600
     return 3600
 
-tok = os.environ.get('VLST_TOKEN', '')
-req = urllib.request.Request(SITE + '/?vlst_want=' + tok, headers={'User-Agent': 'VaultLab-Mirror/1.0'})
-want = json.loads(urllib.request.urlopen(req, timeout=60).read().decode('utf-8'))
+tok = os.environ.get('VLST_TOKEN', '').strip()
+print('암호 길이:', len(tok), '(32가 맞아요)')
+SEED = [{'u': 'https://data.sec.gov/submissions/CIK0000320193.json'}, {'u': 'https://www.sec.gov/files/company_tickers_exchange.json'}]
+try:
+    req = urllib.request.Request(SITE + '/?vlst_want=' + tok, headers={'User-Agent': 'Mozilla/5.0 (compatible; VaultLabMirror/1.0; +https://vaultlab.kr)', 'Accept': 'application/json'})
+    raw = urllib.request.urlopen(req, timeout=60).read().decode('utf-8', 'replace')
+    want = json.loads(raw)
+    print('볼트랩 목록:', len(want), '개')
+except urllib.error.HTTPError as e:
+    print('볼트랩 사이트 응답', e.code, '·', e.read()[:200].decode('utf-8', 'replace').replace('\n', ' '))
+    print('→ 일단 기본 주소만으로 SEC 시험을 해요')
+    want = SEED
+except Exception as e:
+    print('볼트랩 목록을 못 읽었어요:', str(e)[:200]); want = SEED
 now = time.time()
 todo = []
 for w in want:
@@ -56,3 +67,4 @@ for h in list(state):
         except OSError: pass
 json.dump(state, open(state_p, 'w'))
 print('받음 %d · 실패 %d · 대기 %d' % (ok, bad, max(0, len(todo) - MAX)))
+print('SEC 결과:', ', '.join(sorted({str(v.get('c')) for v in state.values()})))
