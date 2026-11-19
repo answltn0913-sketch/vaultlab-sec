@@ -23,7 +23,7 @@ req = urllib.request.Request(SITE + '/?vlst_want=' + tok, headers={'User-Agent':
 want = json.loads(urllib.request.urlopen(req, timeout=60).read().decode('utf-8'))
 now = time.time()
 todo = []
-for w in want:a
+for w in want:
     u = w.get('u', '')
     if not re.match(r'^https://(www\.|data\.|efts\.)?sec\.gov/', u): continue
     h = hashlib.md5(u.encode('utf-8')).hexdigest()
